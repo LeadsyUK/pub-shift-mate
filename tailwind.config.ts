@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Pub-themed colors
+				pub: {
+					DEFAULT: '#9e6c3a', // Warm amber
+					dark: '#7a4e20',    // Dark amber/wood
+					light: '#d4a76a',   // Light amber
+					accent: '#c12026',  // Traditional pub red
+					muted: '#f8f3e9',   // Light cream/parchment 
+					text: '#3c2415',    // Dark brown text
 				}
 			},
 			borderRadius: {
