@@ -15,6 +15,7 @@ import Availability from "./pages/Availability";
 import Timesheets from "./pages/Timesheets";
 import NotFound from "./pages/NotFound";
 
+// Create the React Query client
 const queryClient = new QueryClient();
 
 const App = () => (

@@ -126,4 +126,12 @@
   .pub-section {
     @apply py-6 md:py-8;
   }
+  
+  .btn-friendly {
+    @apply bg-primary text-primary-foreground rounded-full px-6 py-2.5 font-medium shadow-sm transition-colors hover:bg-primary/90;
+  }
+  
+  .input-friendly {
+    @apply rounded-md border border-input bg-background px-4 py-2.5 text-base shadow-sm focus:border-primary focus:ring-1 focus:ring-primary;
+  }
 }

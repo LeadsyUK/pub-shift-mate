@@ -10,7 +10,9 @@ import {
   CreditCard,
   Home,
   CalendarCheck,
-  ClipboardList
+  ClipboardList,
+  Beer,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -54,20 +56,20 @@ const AppSidebar = () => {
   const location = useLocation();
   const { isManager } = useApp();
   
-  // Define navigation items based on role
+  // Define navigation items with friendly names
   const navItems = [
     {
-      title: 'Dashboard',
+      title: 'Home',
       icon: Home,
       href: '/',
     },
     {
-      title: 'Schedule',
+      title: 'Weekly Rota',
       icon: Calendar,
       href: '/schedule',
     },
     {
-      title: 'Staff',
+      title: 'Team',
       icon: Users,
       href: '/staff',
       managerOnly: true
@@ -88,7 +90,7 @@ const AppSidebar = () => {
       href: '/hours',
     },
     {
-      title: 'Payroll',
+      title: 'Pay',
       icon: CreditCard,
       href: '/payroll',
     },
@@ -104,9 +106,9 @@ const AppSidebar = () => {
       <SidebarHeader className="flex h-16 items-center justify-between px-4 border-b">
         <Link to="/" className="flex items-center space-x-2">
           <div className="rounded-md bg-pub-accent text-white p-1">
-            <Clock className="h-5 w-5" />
+            <Beer className="h-5 w-5" />
           </div>
-          <span className="font-bold text-lg">PubShiftMate</span>
+          <span className="font-bold text-lg">ShiftMate</span>
         </Link>
         <SidebarTrigger className="md:hidden">
           <Button variant="ghost" size="icon">
@@ -122,7 +124,7 @@ const AppSidebar = () => {
               <Link
                 key={item.title}
                 to={item.href}
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center px-3 py-3 rounded-md text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
@@ -137,7 +139,7 @@ const AppSidebar = () => {
       </SidebarContent>
       <SidebarFooter className="border-t px-4 py-3">
         <div className="text-xs text-muted-foreground">
-          <p>PubShiftMate</p>
+          <p>ShiftMate for Pubs</p>
           <p>© {new Date().getFullYear()}</p>
         </div>
       </SidebarFooter>
