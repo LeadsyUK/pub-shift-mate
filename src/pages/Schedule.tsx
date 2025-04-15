@@ -311,7 +311,7 @@ const Schedule = () => {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   {shifts.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center my-6">
                       No shifts scheduled
@@ -329,62 +329,62 @@ const Schedule = () => {
                       return (
                         <div
                           key={shift.id}
-                          className={`p-3 rounded-md border text-sm relative cursor-move ${
+                          className={`p-4 rounded-md border relative cursor-move ${
                             !isAvailable ? 'bg-red-50 border-red-200' : 'bg-muted/50'
                           }`}
                           draggable={isManager()}
                           onDragStart={() => handleDragStart(shift)}
                         >
-                          <div className="flex justify-between items-start mb-1">
+                          <div className="flex justify-between items-start mb-2">
                             <div>
                               <div className="font-medium text-sm">{staffMember?.name}</div>
-                              <div className="text-xs text-muted-foreground flex items-center space-x-1">
-                                <Badge variant="outline" className="mr-1 py-0 px-1">
+                              <div className="text-xs text-muted-foreground flex items-center space-x-2">
+                                <Badge variant="outline" className="mr-1 py-0 px-1.5">
                                   {shift.position}
                                 </Badge>
                                 {shift.isPaid && (
-                                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 py-0 px-1">
+                                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 py-0 px-1.5">
                                     Paid
                                   </Badge>
                                 )}
                               </div>
                             </div>
                             {isManager() && (
-                              <div className="flex space-x-1">
+                              <div className="flex space-x-1.5">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-7 w-7"
                                   onClick={() => handleEditClick(shift)}
                                 >
-                                  <Edit className="h-3.5 w-3.5" />
+                                  <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-7 w-7"
                                   onClick={() => handleDeleteClick(shift)}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             )}
                           </div>
                           
-                          <div className="text-xs flex items-center space-x-1 mt-1">
-                            <Clock className="h-3 w-3" />
+                          <div className="text-xs flex items-center space-x-2 mt-1.5">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                             <span>{formatTime(shift.startTime)} - {formatTime(shift.endTime)}</span>
                           </div>
                           
                           {shift.handoverNotes && (
-                            <div className="mt-1 text-xs italic text-muted-foreground border-t pt-1">
+                            <div className="mt-2 text-xs italic text-muted-foreground border-t pt-1.5">
                               "{shift.handoverNotes}"
                             </div>
                           )}
                           
                           {!isAvailable && (
-                            <div className="mt-1 text-xs text-red-600 flex items-center space-x-1">
-                              <AlertCircle className="h-3 w-3" />
+                            <div className="mt-1.5 text-xs text-red-600 flex items-center space-x-1.5">
+                              <AlertCircle className="h-3.5 w-3.5" />
                               <span>Availability conflict</span>
                             </div>
                           )}
@@ -395,7 +395,7 @@ const Schedule = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="absolute bottom-1 right-1 h-6 w-6"
+                                  className="absolute bottom-1.5 right-1.5 h-6 w-6"
                                   onClick={() => handleSendReminder(shift)}
                                 >
                                   <Bell className="h-3.5 w-3.5" />
