@@ -289,12 +289,12 @@ const Schedule = () => {
             {shiftsByDay.map(({ date, dateStr, shifts }) => (
               <Card 
                 key={dateStr} 
-                className={`md:min-h-[24rem] ${dragOverDay === dateStr ? 'border-primary border-2' : ''}`}
+                className={`md:min-h-[24rem] p-4 ${dragOverDay === dateStr ? 'border-primary border-2' : ''}`}
                 onDragOver={(e) => handleDragOver(dateStr, e)}
                 onDragLeave={handleDragLeave}
                 onDrop={() => handleDrop(dateStr)}
               >
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex justify-between items-center">
                     <span className={date.getDay() === 0 || date.getDay() === 6 ? 'text-pub-accent' : ''}>
                       {formatDay(date)}
@@ -311,9 +311,9 @@ const Schedule = () => {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-3">
                   {shifts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center my-8">
+                    <p className="text-sm text-muted-foreground text-center my-6">
                       No shifts scheduled
                     </p>
                   ) : (
@@ -329,24 +329,49 @@ const Schedule = () => {
                       return (
                         <div
                           key={shift.id}
-                          className={`p-2 rounded-md border text-sm relative cursor-move ${
+                          className={`p-3 rounded-md border text-sm relative cursor-move ${
                             !isAvailable ? 'bg-red-50 border-red-200' : 'bg-muted/50'
                           }`}
                           draggable={isManager()}
                           onDragStart={() => handleDragStart(shift)}
                         >
-                          <div className="font-medium">{staffMember?.name}</div>
-                          <div className="text-xs text-muted-foreground mb-1 flex items-center">
-                            <Badge variant="outline" className="mr-1 py-0 px-1">
-                              {shift.position}
-                            </Badge>
-                            {shift.isPaid && (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 ml-1 py-0 px-1">
-                                Paid
-                              </Badge>
+                          <div className="flex justify-between items-start mb-1">
+                            <div>
+                              <div className="font-medium text-sm">{staffMember?.name}</div>
+                              <div className="text-xs text-muted-foreground flex items-center space-x-1">
+                                <Badge variant="outline" className="mr-1 py-0 px-1">
+                                  {shift.position}
+                                </Badge>
+                                {shift.isPaid && (
+                                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 py-0 px-1">
+                                    Paid
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            {isManager() && (
+                              <div className="flex space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleEditClick(shift)}
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleDeleteClick(shift)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             )}
                           </div>
-                          <div className="text-xs flex items-center space-x-1">
+                          
+                          <div className="text-xs flex items-center space-x-1 mt-1">
                             <Clock className="h-3 w-3" />
                             <span>{formatTime(shift.startTime)} - {formatTime(shift.endTime)}</span>
                           </div>
@@ -364,45 +389,23 @@ const Schedule = () => {
                             </div>
                           )}
                           
-                          <div className="absolute top-2 right-2 flex space-x-1">
-                            {isManager() && (
-                              <>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => handleEditClick(shift)}
+                                  className="absolute bottom-1 right-1 h-6 w-6"
+                                  onClick={() => handleSendReminder(shift)}
                                 >
-                                  <Edit className="h-3.5 w-3.5" />
+                                  <Bell className="h-3.5 w-3.5" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => handleDeleteClick(shift)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </>
-                            )}
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => handleSendReminder(shift)}
-                                  >
-                                    <Bell className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Send shift reminder</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Send shift reminder</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       );
                     })
