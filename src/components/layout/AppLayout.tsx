@@ -8,7 +8,9 @@ import {
   Menu, 
   X, 
   CreditCard,
-  Home
+  Home,
+  CalendarCheck,
+  ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -19,6 +21,7 @@ import {
   SidebarProvider, 
   SidebarTrigger 
 } from '@/components/ui/sidebar';
+import { useApp } from '@/contexts/AppContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -49,7 +52,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
 const AppSidebar = () => {
   const location = useLocation();
+  const { isManager } = useApp();
   
+  // Define navigation items based on role
   const navItems = [
     {
       title: 'Dashboard',
@@ -65,6 +70,17 @@ const AppSidebar = () => {
       title: 'Staff',
       icon: Users,
       href: '/staff',
+      managerOnly: true
+    },
+    {
+      title: 'Availability',
+      icon: CalendarCheck,
+      href: '/availability',
+    },
+    {
+      title: 'Timesheets',
+      icon: ClipboardList,
+      href: '/timesheets',
     },
     {
       title: 'Hours',
@@ -77,6 +93,11 @@ const AppSidebar = () => {
       href: '/payroll',
     },
   ];
+
+  // Filter navigation items based on user role
+  const filteredNavItems = navItems.filter(item => 
+    !item.managerOnly || isManager()
+  );
 
   return (
     <Sidebar>
@@ -95,7 +116,7 @@ const AppSidebar = () => {
       </SidebarHeader>
       <SidebarContent>
         <nav className="space-y-1 px-2 py-4">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link

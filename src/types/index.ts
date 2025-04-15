@@ -9,6 +9,19 @@ export interface Staff {
   hourlyRate: number;
   isActive: boolean;
   notes?: string;
+  availability?: Availability[];
+}
+
+// Staff availability type
+export interface Availability {
+  id: string;
+  staffId: string;
+  dayOfWeek: number; // 0-6 (Sunday-Saturday)
+  startTime: string; // HH:MM format
+  endTime: string; // HH:MM format
+  isAvailable: boolean;
+  recurrenceType: 'weekly' | 'oneTime';
+  date?: string; // ISO date string for one-time availability
 }
 
 // Shift type
@@ -21,6 +34,7 @@ export interface Shift {
   position: string;
   notes?: string;
   isPaid: boolean;
+  handoverNotes?: string;
 }
 
 // Computed hours and pay
@@ -38,4 +52,27 @@ export interface Week {
   endDate: Date;
   weekNumber: number;
   isCurrentWeek: boolean;
+}
+
+// Permission levels
+export type UserRole = 'manager' | 'staff';
+
+// User interface for permissions
+export interface User {
+  id: string;
+  staffId: string;
+  email: string;
+  role: UserRole;
+  lastLogin?: string;
+}
+
+// Timesheet entry
+export interface TimesheetEntry {
+  id: string;
+  staffId: string;
+  shiftId: string;
+  clockInTime: string; // ISO date-time string
+  clockOutTime?: string; // ISO date-time string
+  manuallyEntered: boolean;
+  notes?: string;
 }

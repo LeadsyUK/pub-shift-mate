@@ -11,6 +11,8 @@ import Staff from "./pages/Staff";
 import Schedule from "./pages/Schedule";
 import Hours from "./pages/Hours";
 import Payroll from "./pages/Payroll";
+import Availability from "./pages/Availability";
+import Timesheets from "./pages/Timesheets";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +29,8 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/staff" element={<Staff />} />
               <Route path="/schedule" element={<Schedule />} />
+              <Route path="/availability" element={<Availability />} />
+              <Route path="/timesheets" element={<Timesheets />} />
               <Route path="/hours" element={<Hours />} />
               <Route path="/payroll" element={<Payroll />} />
               <Route path="*" element={<NotFound />} />

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,19 +21,26 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ChevronLeft, ChevronRight, Plus, Edit, Trash2 } from 'lucide-react';
-import { Shift as ShiftType } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, ChevronRight, Plus, Edit, Trash2, Calendar, Clock, AlertCircle, Bell, CheckCircle2 } from 'lucide-react';
+import { Shift as ShiftType, Staff as StaffType, Availability as AvailabilityType } from '@/types';
+import { toast } from "@/hooks/use-toast";
 
 const Schedule = () => {
   const { 
     staff, 
     shifts, 
+    availabilities,
     currentWeekStart, 
     setCurrentWeekStart,
     addShift,
     updateShift,
     deleteShift,
-    getStaffById 
+    getStaffById,
+    sendShiftReminder,
+    isManager
   } = useApp();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -41,6 +48,8 @@ const Schedule = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentShift, setCurrentShift] = useState<ShiftType | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [draggedShift, setDraggedShift] = useState<ShiftType | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     staffId: '',
@@ -49,6 +58,7 @@ const Schedule = () => {
     endTime: '',
     position: '',
     notes: '',
+    handoverNotes: '',
     isPaid: false,
   });
 
@@ -118,6 +128,7 @@ const Schedule = () => {
       endTime: '',
       position: '',
       notes: '',
+      handoverNotes: '',
       isPaid: false,
     });
   };
@@ -148,6 +159,7 @@ const Schedule = () => {
       endTime: shift.endTime,
       position: shift.position,
       notes: shift.notes || '',
+      handoverNotes: shift.handoverNotes || '',
       isPaid: shift.isPaid,
     });
     setIsEditDialogOpen(true);
@@ -173,11 +185,72 @@ const Schedule = () => {
     }
   };
 
+  const handleSendReminder = (shift: ShiftType) => {
+    sendShiftReminder(shift.id);
+  };
+
+  // Drag and drop functionality
+  const handleDragStart = (shift: ShiftType) => {
+    if (!isManager()) return; // Only managers can drag shifts
+    setDraggedShift(shift);
+  };
+
+  const handleDragOver = (date: string, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverDay(date);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDay(null);
+  };
+
+  const handleDrop = (date: string) => {
+    if (draggedShift && date !== draggedShift.date) {
+      // Update the shift with the new date
+      updateShift({
+        ...draggedShift,
+        date
+      });
+      
+      toast({
+        title: "Shift Moved",
+        description: `Shift has been moved to ${new Date(date).toLocaleDateString('en-GB')}`
+      });
+    }
+    
+    setDraggedShift(null);
+    setDragOverDay(null);
+  };
+
+  // Check staff availability
+  const isStaffAvailable = (staffId: string, date: string, startTime: string, endTime: string): boolean => {
+    const dayOfWeek = new Date(date).getDay();
+    const staffAvailabilities = availabilities.filter(a => 
+      a.staffId === staffId && 
+      (a.recurrenceType === 'weekly' && a.dayOfWeek === dayOfWeek) ||
+      (a.recurrenceType === 'oneTime' && a.date === date)
+    );
+    
+    if (staffAvailabilities.length === 0) return true; // No availability set means available
+    
+    for (const availability of staffAvailabilities) {
+      if (!availability.isAvailable) return false; // Explicitly marked as unavailable
+      
+      // Check time ranges
+      if (startTime >= availability.startTime && endTime <= availability.endTime) {
+        return true; // Within available hours
+      }
+    }
+    
+    return false; // No matching availability found
+  };
+
   // Group shifts by day
   const shiftsByDay = weekDays.map(day => {
     const dayStr = day.toISOString().split('T')[0];
     return {
       date: day,
+      dateStr: dayStr,
       shifts: shifts.filter(shift => shift.date === dayStr),
     };
   });
@@ -215,70 +288,223 @@ const Schedule = () => {
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-        {shiftsByDay.map(({ date, shifts }) => (
-          <Card key={date.toISOString()} className="md:min-h-[16rem]">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex justify-between items-center">
-                <span className={date.getDay() === 0 || date.getDay() === 6 ? 'text-pub-accent' : ''}>
-                  {formatDay(date)}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleAddClick(date)}
-                  className="h-8 w-8"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </CardTitle>
+      <Tabs defaultValue="grid">
+        <TabsList className="mb-4">
+          <TabsTrigger value="grid">Grid View</TabsTrigger>
+          <TabsTrigger value="list">List View</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="grid">
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+            {shiftsByDay.map(({ date, dateStr, shifts }) => (
+              <Card 
+                key={dateStr} 
+                className={`md:min-h-[24rem] ${dragOverDay === dateStr ? 'border-primary border-2' : ''}`}
+                onDragOver={(e) => handleDragOver(dateStr, e)}
+                onDragLeave={handleDragLeave}
+                onDrop={() => handleDrop(dateStr)}
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex justify-between items-center">
+                    <span className={date.getDay() === 0 || date.getDay() === 6 ? 'text-pub-accent' : ''}>
+                      {formatDay(date)}
+                    </span>
+                    {isManager() && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleAddClick(date)}
+                        className="h-8 w-8"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {shifts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center my-8">
+                      No shifts scheduled
+                    </p>
+                  ) : (
+                    shifts.map(shift => {
+                      const staffMember = getStaffById(shift.staffId);
+                      const isAvailable = staffMember ? isStaffAvailable(
+                        staffMember.id, 
+                        shift.date, 
+                        shift.startTime, 
+                        shift.endTime
+                      ) : true;
+                      
+                      return (
+                        <div
+                          key={shift.id}
+                          className={`p-2 rounded-md border text-sm relative cursor-move ${
+                            !isAvailable ? 'bg-red-50 border-red-200' : 'bg-muted/50'
+                          }`}
+                          draggable={isManager()}
+                          onDragStart={() => handleDragStart(shift)}
+                        >
+                          <div className="font-medium">{staffMember?.name}</div>
+                          <div className="text-xs text-muted-foreground mb-1 flex items-center">
+                            <Badge variant="outline" className="mr-1 py-0 px-1">
+                              {shift.position}
+                            </Badge>
+                            {shift.isPaid && (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 ml-1 py-0 px-1">
+                                Paid
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
+                          </div>
+                          
+                          {shift.handoverNotes && (
+                            <div className="mt-1 text-xs italic text-muted-foreground border-t pt-1">
+                              "{shift.handoverNotes}"
+                            </div>
+                          )}
+                          
+                          {!isAvailable && (
+                            <div className="mt-1 text-xs text-red-600 flex items-center">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              Availability conflict
+                            </div>
+                          )}
+                          
+                          <div className="absolute top-2 right-2 flex space-x-1">
+                            {isManager() && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleEditClick(shift)}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleDeleteClick(shift)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => handleSendReminder(shift)}
+                                  >
+                                    <Bell className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Send shift reminder</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="list">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Schedule</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               {shifts.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center my-8">
-                  No shifts scheduled
+                <p className="text-center text-muted-foreground py-8">
+                  No shifts scheduled for this week.
                 </p>
               ) : (
-                shifts.map(shift => {
-                  const staffMember = getStaffById(shift.staffId);
-                  return (
-                    <div
-                      key={shift.id}
-                      className="p-2 rounded-md border bg-muted/50 text-sm relative"
-                    >
-                      <div className="font-medium">{staffMember?.name}</div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {shift.position}
-                      </div>
-                      <div className="text-xs">
-                        {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
-                      </div>
-                      <div className="absolute top-2 right-2 flex space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleEditClick(shift)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleDeleteClick(shift)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                <div className="space-y-4">
+                  {shiftsByDay.map(({ date, shifts }) => (
+                    <div key={date.toISOString()}>
+                      {shifts.length > 0 && (
+                        <div>
+                          <h3 className="font-medium mb-2">
+                            {formatDay(date, true)}
+                          </h3>
+                          <div className="space-y-2 pl-4 border-l-2 border-muted">
+                            {shifts.map(shift => {
+                              const staffMember = getStaffById(shift.staffId);
+                              return (
+                                <div 
+                                  key={shift.id}
+                                  className="p-3 border rounded-md flex justify-between items-center"
+                                >
+                                  <div>
+                                    <div className="font-medium">{staffMember?.name}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {shift.position} • {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
+                                    </div>
+                                    {shift.handoverNotes && (
+                                      <div className="mt-1 text-sm italic text-muted-foreground">
+                                        "{shift.handoverNotes}"
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    {isManager() && (
+                                      <>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleEditClick(shift)}
+                                        >
+                                          <Edit className="h-4 w-4 mr-1" />
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleDeleteClick(shift)}
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-1" />
+                                          Delete
+                                        </Button>
+                                      </>
+                                    )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleSendReminder(shift)}
+                                    >
+                                      <Bell className="h-4 w-4 mr-1" />
+                                      Remind
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  );
-                })
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
-        ))}
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Add Shift Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -359,6 +585,18 @@ const Schedule = () => {
                 value={formData.notes}
                 onChange={handleInputChange}
                 placeholder="Additional information..."
+                rows={2}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="handoverNotes">Handover Notes (optional)</Label>
+              <Textarea
+                id="handoverNotes"
+                name="handoverNotes"
+                value={formData.handoverNotes}
+                onChange={handleInputChange}
+                placeholder="Notes for shift handover..."
                 rows={2}
               />
             </div>
@@ -457,6 +695,18 @@ const Schedule = () => {
                 value={formData.notes}
                 onChange={handleInputChange}
                 placeholder="Additional information..."
+                rows={2}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="edit-handoverNotes">Handover Notes (optional)</Label>
+              <Textarea
+                id="edit-handoverNotes"
+                name="handoverNotes"
+                value={formData.handoverNotes}
+                onChange={handleInputChange}
+                placeholder="Notes for shift handover..."
                 rows={2}
               />
             </div>
