@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
@@ -62,14 +61,12 @@ const Schedule = () => {
     isPaid: false,
   });
 
-  // Generate array of days for the current week
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const day = new Date(currentWeekStart);
     day.setDate(currentWeekStart.getDate() + i);
     return day;
   });
 
-  // Format day as "Mon 12" or "Monday 12th April" if fullDate is true
   const formatDay = (date: Date, fullDate = false) => {
     if (fullDate) {
       return date.toLocaleDateString('en-GB', { 
@@ -189,9 +186,8 @@ const Schedule = () => {
     sendShiftReminder(shift.id);
   };
 
-  // Drag and drop functionality
   const handleDragStart = (shift: ShiftType) => {
-    if (!isManager()) return; // Only managers can drag shifts
+    if (!isManager()) return;
     setDraggedShift(shift);
   };
 
@@ -206,7 +202,6 @@ const Schedule = () => {
 
   const handleDrop = (date: string) => {
     if (draggedShift && date !== draggedShift.date) {
-      // Update the shift with the new date
       updateShift({
         ...draggedShift,
         date
@@ -222,7 +217,6 @@ const Schedule = () => {
     setDragOverDay(null);
   };
 
-  // Check staff availability
   const isStaffAvailable = (staffId: string, date: string, startTime: string, endTime: string): boolean => {
     const dayOfWeek = new Date(date).getDay();
     const staffAvailabilities = availabilities.filter(a => 
@@ -231,21 +225,19 @@ const Schedule = () => {
       (a.recurrenceType === 'oneTime' && a.date === date)
     );
     
-    if (staffAvailabilities.length === 0) return true; // No availability set means available
+    if (staffAvailabilities.length === 0) return true;
     
     for (const availability of staffAvailabilities) {
-      if (!availability.isAvailable) return false; // Explicitly marked as unavailable
+      if (!availability.isAvailable) return false;
       
-      // Check time ranges
       if (startTime >= availability.startTime && endTime <= availability.endTime) {
-        return true; // Within available hours
+        return true;
       }
     }
     
-    return false; // No matching availability found
+    return false;
   };
 
-  // Group shifts by day
   const shiftsByDay = weekDays.map(day => {
     const dayStr = day.toISOString().split('T')[0];
     return {
@@ -255,14 +247,12 @@ const Schedule = () => {
     };
   });
 
-  // Format time from 24hr to 12hr
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
     return `${hour % 12 || 12}:${minutes}${hour >= 12 ? 'pm' : 'am'}`;
   };
 
-  // Get staff positions (unique)
   const staffPositions = [...new Set(staff.map(s => s.position))];
 
   return (
@@ -356,9 +346,9 @@ const Schedule = () => {
                               </Badge>
                             )}
                           </div>
-                          <div className="text-xs flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
+                          <div className="text-xs flex items-center space-x-1">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatTime(shift.startTime)} - {formatTime(shift.endTime)}</span>
                           </div>
                           
                           {shift.handoverNotes && (
@@ -368,9 +358,9 @@ const Schedule = () => {
                           )}
                           
                           {!isAvailable && (
-                            <div className="mt-1 text-xs text-red-600 flex items-center">
-                              <AlertCircle className="h-3 w-3 mr-1" />
-                              Availability conflict
+                            <div className="mt-1 text-xs text-red-600 flex items-center space-x-1">
+                              <AlertCircle className="h-3 w-3" />
+                              <span>Availability conflict</span>
                             </div>
                           )}
                           
@@ -383,7 +373,7 @@ const Schedule = () => {
                                   className="h-6 w-6"
                                   onClick={() => handleEditClick(shift)}
                                 >
-                                  <Edit className="h-3 w-3" />
+                                  <Edit className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -391,7 +381,7 @@ const Schedule = () => {
                                   className="h-6 w-6"
                                   onClick={() => handleDeleteClick(shift)}
                                 >
-                                  <Trash2 className="h-3 w-3" />
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </>
                             )}
@@ -404,7 +394,7 @@ const Schedule = () => {
                                     className="h-6 w-6"
                                     onClick={() => handleSendReminder(shift)}
                                   >
-                                    <Bell className="h-3 w-3" />
+                                    <Bell className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -506,7 +496,6 @@ const Schedule = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Add Shift Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -616,7 +605,6 @@ const Schedule = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Shift Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -722,7 +710,6 @@ const Schedule = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
